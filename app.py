@@ -10,7 +10,8 @@ def chat():
 
 @socketio.on('message')
 def handleMessage(msg):
-    print('Message: ' + msg)
+    # with open('log.txt', 'a') as f:
+    #     f.write(msg + '\n')
     emit('message', msg, broadcast=True)
 
 if __name__ == '__main__':

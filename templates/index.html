@@ -35,60 +35,96 @@
             return username;
         }
 
+        function getIP() {
+            return new Promise(function (resolve, reject) {
+                $.get('https://api.ipify.org?format=json', function (data) {
+                    resolve(data.ip);
+                }).fail(function () {
+                    resolve('127.0.0.1');  // Return a default value in case of failure
+                });
+            });
+        }
+
+        function ipToSortedHex(ip) {
+            var hex = parseInt(ip.split('.').map(function (part) {
+                return parseInt(part, 10).toString(16).padStart(2, '0');
+            }).join(''), 16).toString(16).padStart(8, '0');
+            return hex.split('').sort().reverse().join('');
+        }
+
         var username = localStorage.getItem('username');
         if (!username) {
             username = generateUsername();
             localStorage.setItem('username', username);
         }
 
-        $('body').terminal(
-            {
-                '--help': function () {
-                    this.echo('help message');
-                },
-                '--theme': function (theme) {
-                    switch (theme) {
-                        case 'light':
-                            document.documentElement.style.setProperty('--background', '#ece7ce');
-                            document.documentElement.style.setProperty('--color', '#333333');
-                            break;
-                        case 'dark':
-                            document.documentElement.style.setProperty('--background', '#000000');
-                            document.documentElement.style.setProperty('--color', '#00ff00');
-                            break;
-                        case 'cyber':
-                            document.documentElement.style.setProperty('--background', '#253444');
-                            document.documentElement.style.setProperty('--color', '#77f2f9');
-                            break;                        
-                        default:
-                            this.echo(`Theme "${theme}" is not recognized.`);
+        var hardware = localStorage.getItem('hardware');
+        if (!hardware) {
+            getIP().then(function (ip) {
+                hardware = ipToSortedHex(ip);
+                localStorage.setItem('hardware', hardware);
+                initializeTerminal(username, hardware);
+            });
+        } else {
+            initializeTerminal(username, hardware);
+        }
+
+        function initializeTerminal(username, hardware) {
+            $('body').terminal(
+                {
+                    '--help': function () {
+                        this.echo("options:\n--help\t\t\tshow this help message\n--theme THEME\tchange theme ('dark', 'light', or 'cyber')\n--reset\t\t\treset username");
+                    },
+                    '--theme': function (theme) {
+                        switch (theme) {
+                            case 'light':
+                                document.documentElement.style.setProperty('--background', '#ece7ce');
+                                document.documentElement.style.setProperty('--color', '#333333');
+                                break;
+                            case 'dark':
+                                document.documentElement.style.setProperty('--background', '#000000');
+                                document.documentElement.style.setProperty('--color', '#00ff00');
+                                break;
+                            case 'cyber':
+                                document.documentElement.style.setProperty('--background', '#253444');
+                                document.documentElement.style.setProperty('--color', '#77f2f9');
+                                break;
+                            default:
+                                this.echo(`Theme "${theme}" is not recognized.`);
+                        }
+                    },
+                    '--reset': function () {
+                        var newUsername = generateUsername();
+                        localStorage.removeItem('hardware');
+                        getIP().then(function (ip) {
+                            var newHardware = ipToSortedHex(ip);
+                            localStorage.setItem('hardware', newHardware);
+                            localStorage.setItem('username', newUsername);
+                            this.set_prompt(newUsername + '@' + newHardware + ': ');
+                            this.echo('Your username has been reset to ' + newUsername + ' and location has been reset to ' + newHardware);
+                        }.bind(this)).catch(function (error) {
+                            this.echo('Error resetting location: ' + error);
+                        }.bind(this));
                     }
                 },
-                '--reset': function () {
-                    var newUsername = generateUsername();
-                    localStorage.setItem('username', newUsername);
-                    this.set_prompt(newUsername + '@location: ');
-                    this.echo('Your username has been reset to ' + newUsername);
+                {
+                    prompt: username + '@' + hardware + ': ',
+                    greetings: null,
+                    onCommandNotFound: function (command, terminal) {
+                        var message = username + '@' + hardware + ': ' + command;
+                        justSent = true; // flag to see if the message was just sent by the user
+                        socket.emit('message', message);
+                    }
                 }
-
-            },
-            {
-                prompt: username + '@location: ',
-                greetings: null,
-                onCommandNotFound: function (command, terminal) {
-                    var message = username + '@location: ' + command;
-                    justSent = true; // flag to see if the message was just sent by the user
-                    socket.emit('message', message);
+            );
+            socket.on('message', function (msg) {
+                if (justSent) {
+                    justSent = false;
+                } else {
+                    $('body').terminal().echo(msg);
                 }
-            }
-        );
-        socket.on('message', function (msg) {
-            if (justSent) {
-                justSent = false;
-            } else {
-                $('body').terminal().echo(msg);
-            }
-        });
+            });
+        }
     </script>
 </body>
 
