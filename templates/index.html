@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css" rel="stylesheet"/>
+    <script src="https://unpkg.com/js-polyfills/keyboard.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jcubic/static/js/wcwidth.js"></script>
+    
+    <style id="dynamic-theme">
+        :root {
+            --size: 1.4;
+            --background: #000000;
+            --color: #00ff00;
+        }
+        body {
+            background: var(--background);
+            color: var(--color);
+        }
+    </style>
+    
+</head>
+
+<body>
+    <script>
+        $('body').terminal(
+            {
+                '--help': function () {
+                    this.echo('help message');
+                },
+                '--theme': function (theme) {
+                    switch(theme) {
+                        case 'light':
+                            document.documentElement.style.setProperty('--background', '#ece7ce');
+                            document.documentElement.style.setProperty('--color', '#333333');
+                            break;
+                        case 'dark':
+                            document.documentElement.style.setProperty('--background', '#000000');
+                            document.documentElement.style.setProperty('--color', '#00ff00');
+                            break;
+                        default:
+                            this.echo(`Theme "${theme}" is not recognized.`);
+                    }
+                }
+            },
+            {
+                prompt: 'username@location: ',
+                greetings: null,
+                // Do nothing for unrecognized commands
+                onCommandNotFound: function(command, terminal) {
+                    // do nothing
+                }
+            }
+        );
+    </script>
+</body>
+
+</html>
