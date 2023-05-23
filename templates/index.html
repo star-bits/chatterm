@@ -24,6 +24,19 @@
     <script>
         var socket = io.connect('http://' + document.domain + ':' + location.port);
         var justSent = false;
+        
+        // Generate random 8 character username
+        function generateUsername() {
+            var username = '';
+            var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            for (var i = 0; i < 8; i++) {
+                username += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return username;
+        }
+        
+        var username = generateUsername();
+        
         $('body').terminal(
             {
                 '--help': function () {
@@ -45,10 +58,10 @@
                 }
             },
             {
-                prompt: 'username@location: ',
+                prompt: username + '@location: ',
                 greetings: null,
                 onCommandNotFound: function(command, terminal) {
-                    var message = 'username@location: ' + command;
+                    var message = username + '@location: ' + command;
                     justSent = true; // flag to see if the message was just sent by the user
                     socket.emit('message', message);
                 }
