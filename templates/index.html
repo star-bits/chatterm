@@ -5,7 +5,7 @@
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css" rel="stylesheet" />
 
     <style id="dynamic-theme">
         :root {
@@ -13,6 +13,7 @@
             --background: #000000;
             --color: #00ff00;
         }
+
         body {
             background: var(--background);
             color: var(--color);
@@ -24,8 +25,7 @@
     <script>
         var socket = io.connect('http://' + document.domain + ':' + location.port);
         var justSent = false;
-        
-        // Generate random 8 character username
+
         function generateUsername() {
             var username = '';
             var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -40,14 +40,14 @@
             username = generateUsername();
             localStorage.setItem('username', username);
         }
-        
+
         $('body').terminal(
             {
                 '--help': function () {
                     this.echo('help message');
                 },
                 '--theme': function (theme) {
-                    switch(theme) {
+                    switch (theme) {
                         case 'light':
                             document.documentElement.style.setProperty('--background', '#ece7ce');
                             document.documentElement.style.setProperty('--color', '#333333');
@@ -56,22 +56,33 @@
                             document.documentElement.style.setProperty('--background', '#000000');
                             document.documentElement.style.setProperty('--color', '#00ff00');
                             break;
+                        case 'cyber':
+                            document.documentElement.style.setProperty('--background', '#253444');
+                            document.documentElement.style.setProperty('--color', '#77f2f9');
+                            break;                        
                         default:
                             this.echo(`Theme "${theme}" is not recognized.`);
                     }
+                },
+                '--reset': function () {
+                    var newUsername = generateUsername();
+                    localStorage.setItem('username', newUsername);
+                    this.set_prompt(newUsername + '@location: ');
+                    this.echo('Your username has been reset to ' + newUsername);
                 }
+
             },
             {
                 prompt: username + '@location: ',
                 greetings: null,
-                onCommandNotFound: function(command, terminal) {
+                onCommandNotFound: function (command, terminal) {
                     var message = username + '@location: ' + command;
                     justSent = true; // flag to see if the message was just sent by the user
                     socket.emit('message', message);
                 }
             }
         );
-        socket.on('message', function(msg) {
+        socket.on('message', function (msg) {
             if (justSent) {
                 justSent = false;
             } else {
