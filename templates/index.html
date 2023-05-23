@@ -34,8 +34,12 @@
             }
             return username;
         }
-        
-        var username = generateUsername();
+
+        var username = localStorage.getItem('username');
+        if (!username) {
+            username = generateUsername();
+            localStorage.setItem('username', username);
+        }
         
         $('body').terminal(
             {
