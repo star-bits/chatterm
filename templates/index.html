@@ -23,6 +23,7 @@
 <body>
     <script>
         var socket = io.connect('http://' + document.domain + ':' + location.port);
+        var justSent = false;
         $('body').terminal(
             {
                 '--help': function () {
@@ -48,12 +49,17 @@
                 greetings: null,
                 onCommandNotFound: function(command, terminal) {
                     var message = 'username@location: ' + command;
+                    justSent = true; // flag to see if the message was just sent by the user
                     socket.emit('message', message);
                 }
             }
         );
         socket.on('message', function(msg) {
-            $('body').terminal().echo(msg);
+            if (justSent) {
+                justSent = false;
+            } else {
+                $('body').terminal().echo(msg);
+            }
         });
     </script>
 </body>
